@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('project_payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
-            $table->decimal('amount', 15, 2);
+            $table->integer('amount');
             $table->date('paid_at')->nullable();
             $table->string('description')->nullable();
             $table->timestamps();

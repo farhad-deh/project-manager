@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectResource\Pages;
-use App\Filament\Resources\ProjectResource\RelationManagers;
 use App\Models\Project;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -16,9 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Checkbox;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Carbon;
 use RyanChandler\FilamentProgressColumn\ProgressColumn;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Group;
 
 
 class ProjectResource extends Resource
@@ -31,24 +33,46 @@ class ProjectResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-            TextInput::make('title')
-                ->required()
-                ->maxLength(255)
-                ->label('Title'),
 
-            Textarea::make('description')
-                ->label('Description'),
+            Grid::make(3)->schema([
+                TextInput::make('title')
+                    ->required()
+                    ->maxLength(255)
+                    ->label('Title'),
 
-            TextInput::make('estimated_hours')
-                ->numeric()
-                ->label('Estimated Hours'),
+                Checkbox::make('is_permanent')
+                    ->label('Permanent Project')
+                    ->reactive(),
+            ]),
 
-            TextInput::make('total_cost')
-                ->mask(RawJs::make('$money($input)'))
-                ->stripCharacters(',')
-                ->numeric()
-                ->label('Total Cost')
-                ->prefix('IRR'),
+            Grid::make(3)->schema([
+                TextInput::make('total_cost')
+                    ->mask(RawJs::make('$money($input)'))
+                    ->stripCharacters(',')
+                    ->numeric()
+                    ->label('Total Cost')
+                    ->prefix('IRR')
+                    ->visible(fn(callable $get) => !$get('is_permanent')),
+
+                TextInput::make('hourly_rate')
+                    ->mask(RawJs::make('$money($input)'))
+                    ->stripCharacters(',')
+                    ->numeric()
+                    ->label('Hourly Rate')
+                    ->prefix('IRR')
+                    ->visible(fn(callable $get) => $get('is_permanent')),
+
+                TextInput::make('estimated_hours')
+                    ->numeric()
+                    ->label('Estimated Hours')
+                    ->visible(fn(callable $get) => !$get('is_permanent')),
+
+                TextInput::make('real_hours')
+                    ->numeric()
+                    ->label('Real Hours')
+                    ->disabled()
+                    ->dehydrated(false),
+            ]),
 
             Select::make('status')
                 ->label('Status')
@@ -57,17 +81,15 @@ class ProjectResource extends Resource
                     'doing' => 'Doing',
                     'done' => 'Done',
                     'hold' => 'Hold',
+                    'ongoing' => 'Ongoing',
                 ])
                 ->required()
                 ->default('todo'),
 
-            TextInput::make('real_hours')
-                ->numeric()
-                ->label('Real Hours')
-                ->disabled()
-                ->dehydrated(false),
-        ]);
+            Textarea::make('description')
+                ->label('Description'),
 
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -80,6 +102,12 @@ class ProjectResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('is_permanent')
+                    ->label('Permanent')
+                    ->badge()
+                    ->color(fn(bool $state) => $state ? 'info' : 'secondary')
+                    ->formatStateUsing(fn(bool $state) => $state ? 'Yes' : 'No'),
+
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -88,6 +116,7 @@ class ProjectResource extends Resource
                         'doing' => 'warning',
                         'done' => 'success',
                         'hold' => 'danger',
+                        'ongoing' => 'info',
                     }),
 
                 TextColumn::make('real_hours')
@@ -126,6 +155,10 @@ class ProjectResource extends Resource
                 ProgressColumn::make('remaining_time')
                     ->label('Remaining Time')
                     ->progress(function ($record) {
+                        if ($record->is_permanent || $record->estimated_hours === null) {
+                            return 0;
+                        }
+
                         $totalMinutes = $record->workTimes->sum(function ($wt) {
                             if ($wt->start_time && $wt->end_time) {
                                 return Carbon::parse($wt->start_time)->diffInMinutes(Carbon::parse($wt->end_time));
@@ -138,6 +171,10 @@ class ProjectResource extends Resource
                             : 0;
                     })
                     ->color(function ($record) {
+                        if ($record->is_permanent || $record->estimated_hours === null) {
+                            return 'secondary';
+                        }
+
                         $totalMinutes = $record->workTimes->sum(function ($wt) {
                             if ($wt->start_time && $wt->end_time) {
                                 return Carbon::parse($wt->start_time)->diffInMinutes(Carbon::parse($wt->end_time));
@@ -159,22 +196,36 @@ class ProjectResource extends Resource
                 TextColumn::make('payment_summary')
                     ->label('Payment Summary')
                     ->getStateUsing(function ($record) {
+                        $record->loadMissing(['payments', 'workTimes']);
+
                         $formattedPaid = number_format($record->total_paid, 0, '.', ',');
-                        $formattedCost = number_format($record->total_cost, 0, '.', ',');
-                        return "{$formattedPaid} IRR of<br> {$formattedCost} IRR";
+
+                        $targetCost = $record->is_permanent
+                            ? $record->calculated_total_cost
+                            : $record->total_cost;
+
+                        $formattedTarget = number_format($targetCost, 0, '.', ',');
+
+                        return "{$formattedPaid} IRR of<br> {$formattedTarget} IRR";
                     })
                     ->html(true),
 
                 ProgressColumn::make('payment_progress')
                     ->label('Payment Progress')
                     ->progress(function ($record) {
-                        return $record->total_cost > 0
-                            ? round(($record->total_paid / $record->total_cost) * 100)
+                        $targetCost = $record->is_permanent
+                            ? $record->calculated_total_cost
+                            : $record->total_cost;
+
+                        return $targetCost > 0
+                            ? round(($record->total_paid / $targetCost) * 100)
                             : 0;
                     })
-                    ->color(function ($record) {
-                        return $record->total_paid >= $record->total_cost ? 'success' : 'warning';
-                    }),
+                    ->color(fn($record) => $record->total_paid >= (
+                    $record->is_permanent
+                        ? $record->calculated_total_cost
+                        : $record->total_cost
+                    ) ? 'success' : 'warning'),
             ])
             ->filters([
                 //

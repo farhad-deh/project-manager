@@ -14,10 +14,13 @@ return new class extends Migration {
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->integer('estimated_hours')->default(0);
+            $table->boolean('is_permanent')->default(false); // true => ongoing, false => finite
+            $table->integer('estimated_hours')->nullable();
             $table->integer('real_hours')->nullable();
-            $table->enum('status', ['todo', 'doing', 'done','hold'])->default('todo');
-            $table->float('total_cost')->default(0);
+            // extend status to allow "ongoing" as a special type
+            $table->enum('status', ['todo', 'doing', 'done', 'hold', 'ongoing'])->default('todo');
+            $table->integer('total_cost')->default(0);
+            $table->integer('hourly_rate')->nullable();
             $table->timestamps();
         });
     }
