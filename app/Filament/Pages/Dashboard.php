@@ -17,9 +17,9 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            ProjectStats::class,
             ActiveProjectsChart::class,
             TotalRevenueChart::class,
-            ProjectStats::class,
         ];
     }
 }

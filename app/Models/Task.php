@@ -17,4 +17,9 @@ class Task extends Model
     {
         return $this->hasMany(WorkTime::class);
     }
+
+    public function subtasks()
+    {
+        return $this->hasMany(Subtask::class)->orderBy('sort_order');
+    }
 }

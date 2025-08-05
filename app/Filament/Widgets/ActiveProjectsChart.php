@@ -10,6 +10,7 @@ use Flowframe\Trend\TrendValue;
 class ActiveProjectsChart extends ChartWidget
 {
     protected static ?string $heading = 'پروژه‌های در حال انجام';
+    protected static ?int $sort = 3;
 
     protected function getData(): array
     {

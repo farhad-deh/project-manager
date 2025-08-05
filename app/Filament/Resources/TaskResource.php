@@ -16,7 +16,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\Grid;
 
 class TaskResource extends Resource
 {
@@ -46,6 +48,30 @@ class TaskResource extends Resource
 
             DatePicker::make('due_date')
                 ->label('Due Date'),
+
+            Repeater::make('subtasks')
+                ->label('Subtasks')
+                ->relationship('subtasks')
+                ->schema([
+                    Grid::make(2)->schema([
+                        Textarea::make('description')
+                            ->label('Description')
+                            ->required()
+                            ->rows(2)
+                            ->placeholder('Enter subtask description...')
+                            ->columnSpan(1),
+                        
+                        Forms\Components\Checkbox::make('is_completed')
+                            ->label('Completed')
+                            ->default(false)
+                            ->columnSpan(1),
+                    ]),
+                ])
+                ->defaultItems(0)
+                ->reorderableWithButtons()
+                ->collapsible()
+                ->itemLabel(fn (array $state): ?string => $state['description'] ?? null)
+                ->columnSpanFull(),
         ]);
     }
 
@@ -74,6 +100,7 @@ class TaskResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -85,7 +112,7 @@ class TaskResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\SubtasksRelationManager::class,
         ];
     }
 
@@ -94,6 +121,7 @@ class TaskResource extends Resource
         return [
             'index' => Pages\ListTasks::route('/'),
             'create' => Pages\CreateTask::route('/create'),
+            'view' => Pages\ViewTask::route('/{record}'),
             'edit' => Pages\EditTask::route('/{record}/edit'),
         ];
     }

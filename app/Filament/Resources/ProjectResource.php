@@ -4,23 +4,22 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectResource\Pages;
 use App\Models\Project;
-use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Support\Carbon;
 use RyanChandler\FilamentProgressColumn\ProgressColumn;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Toggle;
 
 
 class ProjectResource extends Resource
@@ -36,59 +35,90 @@ class ProjectResource extends Resource
 
             Grid::make(3)->schema([
                 TextInput::make('title')
+                    ->label('Project Title')
                     ->required()
-                    ->maxLength(255)
-                    ->label('Title'),
+                    ->maxLength(255),
 
-                Checkbox::make('is_permanent')
+                Select::make('status')
+                    ->label('Status')
+                    ->options([
+                        'todo' => 'Todo',
+                        'doing' => 'Doing',
+                        'done' => 'Done',
+                        'hold' => 'Hold',
+                        'ongoing' => 'Ongoing',
+                    ])
+                    ->default('todo')
+                    ->required(),
+
+                Toggle::make('is_permanent')
                     ->label('Permanent Project')
+                    ->inline(false)
                     ->reactive(),
             ]),
 
             Grid::make(3)->schema([
                 TextInput::make('total_cost')
-                    ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(',')
-                    ->numeric()
                     ->label('Total Cost')
                     ->prefix('IRR')
-                    ->visible(fn(callable $get) => !$get('is_permanent')),
-
-                TextInput::make('hourly_rate')
                     ->mask(RawJs::make('$money($input)'))
                     ->stripCharacters(',')
                     ->numeric()
+                    ->visible(fn(Get $get) => !$get('is_permanent')),
+
+                TextInput::make('hourly_rate')
                     ->label('Hourly Rate')
                     ->prefix('IRR')
-                    ->visible(fn(callable $get) => $get('is_permanent')),
+                    ->mask(RawJs::make('$money($input)'))
+                    ->stripCharacters(',')
+                    ->numeric()
+                    ->visible(fn(Get $get) => $get('is_permanent')),
 
                 TextInput::make('estimated_hours')
-                    ->numeric()
                     ->label('Estimated Hours')
-                    ->visible(fn(callable $get) => !$get('is_permanent')),
+                    ->numeric()
+                    ->visible(fn(Get $get) => !$get('is_permanent')),
 
                 TextInput::make('real_hours')
-                    ->numeric()
                     ->label('Real Hours')
+                    ->numeric()
                     ->disabled()
                     ->dehydrated(false),
             ]),
 
-            Select::make('status')
-                ->label('Status')
-                ->options([
-                    'todo' => 'Todo',
-                    'doing' => 'Doing',
-                    'done' => 'Done',
-                    'hold' => 'Hold',
-                    'ongoing' => 'Ongoing',
-                ])
-                ->required()
-                ->default('todo'),
-
             Textarea::make('description')
-                ->label('Description'),
+                ->label('Description')
+                ->columnSpanFull(),
 
+            Repeater::make('tasks')
+                ->label('Tasks')
+                ->relationship('tasks')
+                ->schema([
+                    Grid::make(2)->schema([
+                        TextInput::make('title')
+                            ->label('Title')
+                            ->required()
+                            ->maxLength(255),
+
+                        Textarea::make('description')
+                            ->label('Description')
+                            ->rows(2)
+                            ->placeholder('Enter task description...'),
+                    ]),
+
+                    Grid::make(2)->schema([
+                        DatePicker::make('start_date')
+                            ->label('Start Date'),
+
+                        DatePicker::make('due_date')
+                            ->label('Due Date'),
+                    ]),
+                ])
+                ->defaultItems(0)
+                ->reorderableWithButtons()
+                ->collapsible()
+                ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
+                ->columnSpanFull(),
         ]);
     }
 
@@ -231,6 +261,7 @@ class ProjectResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -244,7 +275,7 @@ class ProjectResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\ProjectResource\RelationManagers\TasksRelationManager::class,
         ];
     }
 
@@ -253,6 +284,7 @@ class ProjectResource extends Resource
         return [
             'index' => Pages\ListProjects::route('/'),
             'create' => Pages\CreateProject::route('/create'),
+            'view' => Pages\ViewProject::route('/{record}'),
             'edit' => Pages\EditProject::route('/{record}/edit'),
         ];
     }
