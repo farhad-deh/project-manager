@@ -12,6 +12,7 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "leandrocfe/filament-apex-charts": "^3.2",
+        "maatwebsite/excel": "^3.1",
         "mokhosh/filament-jalali": "^4.10",
         "ryangjchandler/filament-progress-column": "*"
     },

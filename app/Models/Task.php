@@ -15,7 +15,7 @@ class Task extends Model
 
     public function workTimes()
     {
-        return $this->hasMany(WorkTime::class);
+        return $this->hasMany(WorkTime::class, 'task_id');
     }
 
     public function subtasks()
