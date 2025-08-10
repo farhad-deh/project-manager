@@ -3,16 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProjectPaymentResource\Pages;
-use App\Filament\Resources\ProjectPaymentResource\RelationManagers;
 use App\Models\ProjectPayment;
-use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Support\RawJs;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -63,6 +59,7 @@ class ProjectPaymentResource extends Resource
                     ->money('IRR'),
                 TextColumn::make('paid_at')
                     ->label('Paid at')
+                    ->sortable()
                     ->jalaliDate('Y/m/d'),
                 TextColumn::make('description')
                     ->label('Description')

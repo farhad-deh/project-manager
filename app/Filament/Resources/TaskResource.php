@@ -45,10 +45,12 @@ class TaskResource extends Resource
                 ->label('Description'),
 
             DatePicker::make('start_date')
-                ->label('Start Date'),
+                ->label('Start Date')
+                ->jalali(),
 
             DatePicker::make('due_date')
-                ->label('Due Date'),
+                ->label('Due Date')
+                ->jalali(),
 
             // ----------------------
             // ساب تسک‌ها
@@ -120,10 +122,12 @@ class TaskResource extends Resource
 
                 TextColumn::make('start_date')
                     ->label('Start Date')
+                    ->sortable()
                     ->jalaliDate('Y/m/d'),
 
                 TextColumn::make('due_date')
                     ->label('Due Date')
+                    ->sortable()
                     ->jalaliDate('Y/m/d'),
             ])
             ->filters([

@@ -108,16 +108,43 @@ class ProjectResource extends Resource
 
                     Grid::make(2)->schema([
                         DatePicker::make('start_date')
-                            ->label('Start Date'),
+                            ->label('Start Date')
+                            ->jalali(),
 
                         DatePicker::make('due_date')
-                            ->label('Due Date'),
+                            ->label('Due Date')
+                            ->jalali(),
                     ]),
                 ])
                 ->defaultItems(0)
                 ->reorderableWithButtons()
                 ->collapsible()
                 ->itemLabel(fn(array $state): ?string => $state['title'] ?? null)
+                ->columnSpanFull(),
+
+            // اضافه کردن بخش پرداخت‌ها (Payments)
+            Repeater::make('payments')
+                ->label('Payments')
+                ->relationship('payments')
+                ->schema([
+                    Grid::make(2)->schema([
+                        TextInput::make('amount')
+                            ->label('Amount')
+                            ->prefix('IRR')
+                            ->mask(RawJs::make('$money($input)'))
+                            ->stripCharacters(',')
+                            ->numeric()
+                            ->required(),
+
+                        DatePicker::make('paid_at')
+                            ->label('Paid At')
+                            ->required()
+                            ->jalali(),
+                    ]),
+                ])
+                ->defaultItems(0)
+                ->collapsible()
+                ->itemLabel(fn(array $state): ?string => $state['amount'] ?? null)
                 ->columnSpanFull(),
         ]);
     }

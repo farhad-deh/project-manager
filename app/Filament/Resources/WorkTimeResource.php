@@ -60,6 +60,7 @@ class WorkTimeResource extends Resource
 
                 TextColumn::make('work_date')
                     ->label('Work Date')
+                    ->sortable()
                     ->jalaliDate('Y/m/d'),
 
                 TextColumn::make('start_time')
