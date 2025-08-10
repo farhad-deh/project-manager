@@ -11,9 +11,9 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\BadgeColumn;
+use Filament\Tables\Columns\IconColumn;
+
 
 class SubtaskResource extends Resource
 {
@@ -21,6 +21,11 @@ class SubtaskResource extends Resource
     protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 
     public static function form(Form $form): Form
     {
@@ -57,7 +62,7 @@ class SubtaskResource extends Resource
                     ->limit(50)
                     ->searchable(),
 
-                Tables\Columns\IconColumn::make('is_completed')
+                IconColumn::make('is_completed')
                     ->label('Status')
                     ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
@@ -67,7 +72,7 @@ class SubtaskResource extends Resource
 
                 TextColumn::make('created_at')
                     ->label('Created At')
-                    ->dateTime()
+                    ->jalaliDate('Y/m/d H:i')
                     ->sortable(),
             ])
             ->filters([

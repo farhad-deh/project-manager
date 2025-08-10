@@ -17,6 +17,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TimePicker;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Grid;
 
@@ -49,6 +50,9 @@ class TaskResource extends Resource
             DatePicker::make('due_date')
                 ->label('Due Date'),
 
+            // ----------------------
+            // ساب تسک‌ها
+            // ----------------------
             Repeater::make('subtasks')
                 ->label('Subtasks')
                 ->relationship('subtasks')
@@ -58,19 +62,45 @@ class TaskResource extends Resource
                             ->label('Description')
                             ->required()
                             ->rows(2)
-                            ->placeholder('Enter subtask description...')
-                            ->columnSpan(1),
-                        
+                            ->placeholder('Enter subtask description...'),
+
                         Forms\Components\Checkbox::make('is_completed')
                             ->label('Completed')
-                            ->default(false)
-                            ->columnSpan(1),
+                            ->default(false),
                     ]),
                 ])
                 ->defaultItems(0)
                 ->reorderableWithButtons()
                 ->collapsible()
-                ->itemLabel(fn (array $state): ?string => $state['description'] ?? null)
+                ->itemLabel(fn(array $state): ?string => $state['description'] ?? null)
+                ->columnSpanFull(),
+
+            // ----------------------
+            // ثبت سریع Work Time
+            // ----------------------
+            Repeater::make('workTimes')
+                ->label('Work Times')
+                ->relationship('workTimes')
+                ->schema([
+                    Grid::make(3)->schema([
+                        DatePicker::make('work_date')
+                            ->label('Work Date')
+                            ->required()
+                            ->jalali()
+                            ->default(now()),
+
+                        TimePicker::make('start_time')
+                            ->label('Start')
+                            ->required(),
+
+                        TimePicker::make('end_time')
+                            ->label('End')
+                            ->required(),
+                    ]),
+                ])
+                ->defaultItems(0)
+                ->reorderable(false)
+                ->collapsible()
                 ->columnSpanFull(),
         ]);
     }
@@ -90,29 +120,30 @@ class TaskResource extends Resource
 
                 TextColumn::make('start_date')
                     ->label('Start Date')
-                    ->date(),
+                    ->jalaliDate('Y/m/d'),
 
                 TextColumn::make('due_date')
                     ->label('Due Date')
-                    ->date(),
+                    ->jalaliDate('Y/m/d'),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->defaultPaginationPageOption(25)
+            ->paginationPageOptions([10, 25, 50, 100]);
     }
 
     public static function getRelations(): array
     {
         return [
-            RelationManagers\SubtasksRelationManager::class,
+            //RelationManagers\SubtasksRelationManager::class,
         ];
     }
 

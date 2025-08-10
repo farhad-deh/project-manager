@@ -117,7 +117,7 @@ class ProjectResource extends Resource
                 ->defaultItems(0)
                 ->reorderableWithButtons()
                 ->collapsible()
-                ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)
+                ->itemLabel(fn(array $state): ?string => $state['title'] ?? null)
                 ->columnSpanFull(),
         ]);
     }
@@ -261,14 +261,13 @@ class ProjectResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('exportTasks')
                     ->label('Excel')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
-                    ->url(fn ($record) => route('projects.exportTasks', $record->id))
+                    ->url(fn($record) => route('projects.exportTasks', $record->id))
                     ->openUrlInNewTab(),
             ])
             ->bulkActions([
@@ -281,7 +280,7 @@ class ProjectResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\ProjectResource\RelationManagers\TasksRelationManager::class,
+//            \App\Filament\Resources\ProjectResource\RelationManagers\TasksRelationManager::class,
         ];
     }
 
