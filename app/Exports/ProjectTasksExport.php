@@ -10,7 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 
 class ProjectTasksExport implements FromCollection, WithHeadings
 {
-    protected $projectId;
+    protected int $projectId;
 
     public function __construct(int $projectId)
     {
@@ -27,31 +27,30 @@ class ProjectTasksExport implements FromCollection, WithHeadings
 
         foreach ($tasks as $task) {
             $totalSeconds = 0;
-            $startDates = [];
-            $endDates = [];
 
             foreach ($task->workTimes as $wt) {
-                $start = Carbon::parse($wt->start_time);
-                $end = Carbon::parse($wt->end_time);
+                if (!$wt->start_time || !$wt->end_time) {
+                    continue;
+                }
 
-                $totalSeconds += $end->diffInSeconds($start);
-                $startDates[] = $wt->work_date;
-                $endDates[] = $wt->work_date;
+                $start = Carbon::parse($wt->work_date . ' ' . $wt->start_time);
+                $end = Carbon::parse($wt->work_date . ' ' . $wt->end_time);
+
+                if ($end->lt($start)) {
+                    $end->addDay();
+                }
+
+                $totalSeconds += abs($end->diffInSeconds($start));
             }
 
             $totalHours = floor($totalSeconds / 3600);
             $totalMinutes = floor(($totalSeconds % 3600) / 60);
-
-            $startDate = count($startDates) ? min($startDates) : null;
-            $endDate = count($endDates) ? max($endDates) : null;
 
             $rows->push([
                 'Task Title' => $task->title,
                 'Description' => $task->description,
                 'Start Date' => $task->start_date,
                 'Due Date' => $task->due_date,
-                'Work Start Date' => $startDate,
-                'Work End Date' => $endDate,
                 'Total Time (H:M)' => sprintf('%02d:%02d', $totalHours, $totalMinutes),
             ]);
         }
@@ -66,8 +65,6 @@ class ProjectTasksExport implements FromCollection, WithHeadings
             'Description',
             'Start Date',
             'Due Date',
-            'Work Start Date',
-            'Work End Date',
             'Total Time (H:M)',
         ];
     }

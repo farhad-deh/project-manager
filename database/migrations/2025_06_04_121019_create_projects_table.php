@@ -16,7 +16,6 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->boolean('is_permanent')->default(false); // true => ongoing, false => finite
             $table->integer('estimated_hours')->nullable();
-            $table->integer('real_hours')->nullable();
             // extend status to allow "ongoing" as a special type
             $table->enum('status', ['todo', 'doing', 'done', 'hold', 'ongoing'])->default('todo');
             $table->integer('total_cost')->default(0);

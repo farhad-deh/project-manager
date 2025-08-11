@@ -79,11 +79,6 @@ class ProjectResource extends Resource
                     ->numeric()
                     ->visible(fn(Get $get) => !$get('is_permanent')),
 
-                TextInput::make('real_hours')
-                    ->label('Real Hours')
-                    ->numeric()
-                    ->disabled()
-                    ->dehydrated(false),
             ]),
 
             Textarea::make('description')
@@ -159,12 +154,6 @@ class ProjectResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('is_permanent')
-                    ->label('Permanent')
-                    ->badge()
-                    ->color(fn(bool $state) => $state ? 'info' : 'secondary')
-                    ->formatStateUsing(fn(bool $state) => $state ? 'Yes' : 'No'),
-
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -174,14 +163,6 @@ class ProjectResource extends Resource
                         'done' => 'success',
                         'hold' => 'danger',
                         'ongoing' => 'info',
-                    }),
-
-                TextColumn::make('real_hours')
-                    ->label('Real Hours')
-                    ->getStateUsing(function ($record) {
-                        $hours = floor($record->real_hours);
-                        $minutes = ($record->real_hours - $hours) * 60;
-                        return sprintf('%02d:%02d', $hours, $minutes);
                     }),
 
                 TextColumn::make('estimated_hours')
@@ -241,12 +222,14 @@ class ProjectResource extends Resource
                         $estimatedMinutes = $record->estimated_hours * 60;
                         $remainingMinutes = $estimatedMinutes - $totalMinutes;
                         $tenthOfEstimated = $estimatedMinutes * 0.1;
-                        if ($remainingMinutes > 0
-                            && $remainingMinutes < $tenthOfEstimated
-                            && $record->status !== 'done') {
+
+                        if ($record->status == 'done') {
+                            return 'success';
+                        }
+                        if ($remainingMinutes > 0 && $remainingMinutes < $tenthOfEstimated) {
                             return 'danger';
                         }
-                        return $totalMinutes >= $estimatedMinutes ? 'success' : 'warning';
+                        return $totalMinutes >= $estimatedMinutes ? 'warning' : 'success';
                     }),
 
 
