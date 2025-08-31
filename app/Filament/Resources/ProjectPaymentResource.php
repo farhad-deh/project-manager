@@ -76,7 +76,8 @@ class ProjectPaymentResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('paid_at', 'desc');
     }
 
     public static function getRelations(): array

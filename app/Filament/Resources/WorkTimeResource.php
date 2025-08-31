@@ -3,8 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\WorkTimeResource\Pages;
+use App\Models\Project;
+use App\Models\Task;
 use App\Models\WorkTime;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -25,10 +28,27 @@ class WorkTimeResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+
+            Select::make('project_id')
+                ->label('Project')
+                ->options(Project::pluck('title', 'id'))
+                ->searchable()
+                ->required()
+                ->reactive(),
+
             Select::make('task_id')
                 ->label('Task')
-                ->relationship('task', 'title')
-                ->required(),
+                ->options(function (Get $get) {
+                    $projectId = $get('project_id');
+                    if (!$projectId) {
+                        return [];
+                    }
+                    return Task::where('project_id', $projectId)
+                        ->pluck('title', 'id');
+                })
+                ->searchable()
+                ->required()
+                ->reactive(),
 
             DatePicker::make('work_date')
                 ->label('Work Date')
@@ -98,7 +118,8 @@ class WorkTimeResource extends Resource
                 ]),
             ])
             ->defaultPaginationPageOption(25)
-            ->paginationPageOptions([10, 25, 50, 100]);
+            ->paginationPageOptions([10, 25, 50, 100])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array

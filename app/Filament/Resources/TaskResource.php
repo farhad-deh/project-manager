@@ -141,7 +141,8 @@ class TaskResource extends Resource
                 Tables\Actions\DeleteBulkAction::make(),
             ])
             ->defaultPaginationPageOption(25)
-            ->paginationPageOptions([10, 25, 50, 100]);
+            ->paginationPageOptions([10, 25, 50, 100])
+            ->defaultSort('created_at', 'desc');
     }
 
     public static function getRelations(): array
