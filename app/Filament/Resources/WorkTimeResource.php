@@ -34,7 +34,8 @@ class WorkTimeResource extends Resource
                 ->options(Project::pluck('title', 'id'))
                 ->searchable()
                 ->required()
-                ->reactive(),
+                ->reactive()
+                ->dehydrated(false),
 
             Select::make('task_id')
                 ->label('Task')
